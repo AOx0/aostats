@@ -33,22 +33,29 @@ fn display_battery(command: std::process::Output) {
             continue;
         }
 
-        let Some((bat, status)) = line.split_once_str(": ") else {
+        let Some((_bat, status)) = line.split_once_str(": ") else {
             continue;
         };
 
         print!(
-            "{} {}:",
-            bat.as_bstr(),
-            if status.contains_str("Not") { "N" } else { "C" }
+            "Battery: {}",
+            if status.contains_str("Not") {
+                "N"
+            } else if status.contains_str("Dis") {
+                "D"
+            } else {
+                "C"
+            }
         );
 
-        for word in line.trim().split_str(" ") {
+        for word in status.trim().split_str(" ") {
             if word.contains_str("%") {
-                print!("{}", word.trim().trim_end_with(|c| c == ',').as_bstr());
+                print!("{} ", word.trim().trim_end_with(|c| c == ',').as_bstr());
+            } else if word.contains_str(":") {
+                print!("[{}]", word.trim().as_bstr());
             }
         }
 
-        println!()
+        println!();
     }
 }
