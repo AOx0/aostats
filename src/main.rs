@@ -1,7 +1,12 @@
 use bstr::ByteSlice;
+use clap::Parser;
 use std::process::Command;
 
+#[derive(Parser)]
+struct Args;
+
 fn main() {
+    let Args: Args = Args::parse();
     let res = Command::new("neofetch").arg("--stdout").output();
     match res {
         Ok(command) => {
@@ -22,6 +27,18 @@ fn main() {
         Err(err) => {
             println!("acpi: {}", err);
         }
+    }
+
+    let disks = sysinfo::Disks::new_with_refreshed_list();
+    for disk in &disks {
+        let used = disk.total_space() - disk.available_space();
+        println!(
+            "Disk: \"{}\" {}GiB / {}GiB [{:.1} %]",
+            disk.mount_point().display(),
+            used / 1_073_741_824,
+            disk.total_space() / 1_073_741_824,
+            (used as f64 / disk.total_space() as f64) * 100.,
+        );
     }
 }
 
