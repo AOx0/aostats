@@ -19,16 +19,6 @@ fn main() {
         }
     }
 
-    let res = Command::new("acpi").output();
-    match res {
-        Ok(command) => {
-            display_battery(command);
-        }
-        Err(err) => {
-            println!("acpi: {}", err);
-        }
-    }
-
     let disks = sysinfo::Disks::new_with_refreshed_list();
     for disk in &disks {
         let used = disk.total_space() - disk.available_space();
@@ -39,6 +29,47 @@ fn main() {
             disk.total_space() / 1_073_741_824,
             (used as f64 / disk.total_space() as f64) * 100.,
         );
+    }
+
+    let res = Command::new("ip").arg("a").output();
+    match res {
+        Ok(command) => {
+            let stdout = command.stdout;
+            let mut last_iname = None;
+            for line in stdout.lines() {
+                if !line.starts_with(b" ") {
+                    let mut words = line.split_str(b" ");
+                    let iname = words.nth(1).unwrap().trim_end_with(|c| c == ':');
+                    if !iname.starts_with(b"lo") {
+                        last_iname = Some(iname);
+                    }
+                } else if let (Some(iname), true) =
+                    (last_iname, line.trim_start().starts_with(b"inet"))
+                {
+                    let line = line.trim_start();
+                    let mut words = line.split_str(b" ");
+                    let addr = words.nth(1).unwrap();
+                    println!(
+                        "Inet: [{iname}] {address}",
+                        address = addr.as_bstr(),
+                        iname = iname.as_bstr()
+                    )
+                }
+            }
+        }
+        Err(err) => {
+            println!("ip: {}", err);
+        }
+    }
+
+    let res = Command::new("acpi").output();
+    match res {
+        Ok(command) => {
+            display_battery(command);
+        }
+        Err(err) => {
+            println!("acpi: {}", err);
+        }
     }
 }
 
