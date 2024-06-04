@@ -1,6 +1,6 @@
 use bstr::ByteSlice;
 use clap::Parser;
-use std::process::Command;
+use std::{ops::Not, process::Command};
 
 #[derive(Parser)]
 struct Args;
@@ -49,11 +49,14 @@ fn main() {
                     let line = line.trim_start();
                     let mut words = line.split_str(b" ");
                     let addr = words.nth(1).unwrap();
-                    println!(
-                        "Inet: [{iname}] {address}",
-                        address = addr.as_bstr(),
-                        iname = iname.as_bstr()
-                    )
+
+                    if line.contains_str(b"::").not() && line.contains_str(b":").not() {
+                        println!(
+                            "Inet: [{iname}] {address}",
+                            address = addr.as_bstr(),
+                            iname = iname.as_bstr()
+                        )
+                    }
                 }
             }
         }
